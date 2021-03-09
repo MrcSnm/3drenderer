@@ -37,9 +37,9 @@ void pxStart(void)
 {
     pxBuffer.length = window_width*(window_height+1);
     pxBuffer.width = window_width;
-    pxBuffer.halfW = window_width/2;
     pxBuffer.halfH = window_height/2;
     pxBuffer.height = window_height;
+    pxBuffer.halfW = window_width/2;
     pxBuffer.data = SAFE_NEW(pxBuffer.data, uint32_t, pxBuffer.length, 
         printf("Could not allocate enough memory for pixelbuffer");
         return;
@@ -49,7 +49,7 @@ void pxStart(void)
     SDL_TEXTUREACCESS_STREAMING,
     pxBuffer.width, pxBuffer.height);
 
-    PXRenderer_setState(PX_STATES_FILL | PX_STATES_VERTEX | PX_STATES_LINE);
+    PXRenderer_setState(PX_STATES_FILL);
     PXRenderer_setCulling(PX_CULL_BACK);
 }
 

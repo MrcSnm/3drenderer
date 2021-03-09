@@ -15,13 +15,13 @@
 
 
 triangle_t* triangles_to_render = null;
-vec3 camera = {0, 0, -5};
+vec3 camera = {0, 0, 0};
 bool isRunning = false;
 
 int previousFrameDuration = 0;
 float fov_angle = M_PI/3; //30 degrees
-float zfar = 100;
 float znear = 0.1;
+float zfar = 100;
 mat4 proj_matrix;
 
 /////////////////////////////////////////////////////////////////////
@@ -123,13 +123,13 @@ void update(void)
     vec3 triangle[3];
 
     int n_faces = Array_length(mesh.faces);
-    // mesh.rotation.x+=0.01;
+    mesh.rotation.x+=0.01;
     // mesh.rotation.y+=0.01;
     // mesh.rotation.z+=0.01;
 
     // mesh.translation.x+= 0.01;
     //Translate the vertexes away from the camera
-    mesh.translation.z = -camera.z;
+    mesh.translation.z = 5;
 
     //Create a scale matrix
     mat4 sm = mat4_scale_mat(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -182,9 +182,14 @@ void update(void)
         for(int j = 0; j < 3; j++)
         {
             projection[j] = mat4_project(proj_matrix, transformed_vertex[j]);
+            
+            //Invert Y
+            projection[j].y*=-1;
+
             // //Scale to the viewport
             projection[j].x *= pxBuffer.halfW;
             projection[j].y *= pxBuffer.halfH;
+
 
             //Translate to the screen center
             projection[j].x+= pxBuffer.halfW;
