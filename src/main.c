@@ -38,10 +38,22 @@ void set_wireframe_only(void){PXRenderer_setState(PX_STATES_LINE);}
 void set_filled_only(void){PXRenderer_setState(PX_STATES_FILL);}
 ///Key 4
 void set_filled_wireframe(void){PXRenderer_setState(PX_STATES_FILL|PX_STATES_LINE);}
+///Key 5
+void set_textured(void){PXRenderer_setState(PX_STATES_TEXTURE);}
+///Key 6
+void set_textured_wireframe(void){PXRenderer_setCulling(PX_STATES_TEXTURE | PX_STATES_LINE);}
 ///Key C
 void set_culling_enabled(void){PXRenderer_setCulling(PX_CULL_BACK);}
 ///Key D
 void set_culling_disabled(void){PXRenderer_setCulling(PX_CULL_NONE);}
+///W
+void move_camera_front(void){camera.z+=0.1;}
+///S
+void move_camera_back(void){camera.z-=0.1;}
+///A
+void move_camera_left(void){camera.x-=0.1;}
+///D
+void move_camera_right(void){camera.x+=0.1;}
 
 void start_input()
 {
@@ -50,8 +62,16 @@ void start_input()
     Input_setKeyHandler('2', &set_wireframe_only);
     Input_setKeyHandler('3', &set_filled_only);
     Input_setKeyHandler('4', &set_filled_wireframe);
-    Input_setKeyHandler('C', &set_culling_enabled);
-    Input_setKeyHandler('D', &set_culling_disabled);
+    Input_setKeyHandler('5', &set_textured);
+    Input_setKeyHandler('6', &set_textured_wireframe);
+    Input_setKeyHandler('G', &set_culling_enabled);
+    Input_setKeyHandler('C', &set_culling_disabled);
+
+    Input_setKeyHandler('W', &move_camera_front);
+    Input_setKeyHandler('A', &move_camera_left);
+    Input_setKeyHandler('S', &move_camera_back);
+    Input_setKeyHandler('D', &move_camera_right);
+
 }
 
 void setup(void)
@@ -59,10 +79,13 @@ void setup(void)
     start_input();
     pxStart();
     load_cube_mesh_data();
+    //Load hardcoded texture data
+    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
     triangles_to_render = Array(triangle_t, 256);
     proj_matrix = mat4_perspective_mat( pxBuffer.height/(float)pxBuffer.width, fov_angle, znear, zfar);
     // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj");
-    mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
+    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
+
 }
 
 void free_resources(void);
@@ -90,7 +113,10 @@ void process_input(void)
             isRunning = false;
             break;
         case SDL_KEYDOWN:
-            Input_exec(ev.key.keysym.sym);
+            Input_enable(ev.key.keysym.sym);
+            break;
+        case SDL_KEYUP:
+            Input_disable(ev.key.keysym.sym);
             break;
         case SDL_MOUSEWHEEL:
             if(Input_hasWheelMoved(&ev.wheel))
@@ -105,6 +131,7 @@ void process_input(void)
         default:
             break;
     }
+    Input_update();
 }
 
 int triangles_sort_asc(void* a, void *b)
@@ -127,9 +154,10 @@ void update(void)
     // mesh.rotation.y+=0.01;
     // mesh.rotation.z+=0.01;
 
-    // mesh.translation.x+= 0.01;
+    mesh.translation.x = -camera.x;
     //Translate the vertexes away from the camera
-    mesh.translation.z = 5;
+    mesh.translation.y = -camera.y;
+    mesh.translation.z = -camera.z+5;
 
     //Create a scale matrix
     mat4 sm = mat4_scale_mat(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -203,6 +231,12 @@ void update(void)
                 {projection[1].x, projection[1].y},
                 {projection[2].x, projection[2].y}
             },
+            .texCoords =
+            {
+                {currentFace.a_uv.u, currentFace.a_uv.v},
+                {currentFace.b_uv.u, currentFace.b_uv.v},
+                {currentFace.c_uv.u, currentFace.c_uv.v}
+            },
             .color = finalColor,
             .avg_depth = (transformed_vertex[0].z+transformed_vertex[1].z+
             transformed_vertex[2].z)/ 3.0f
@@ -235,6 +269,13 @@ void render(void)
                 t.points[2].x, t.points[2].y,
                 t.color
                 // 0xFF000000 + (r<<16) +(g<<8)+b
+            );
+        if(PXRenderer_has(PX_STATES_TEXTURE))
+            pxTextureTriangle(
+                t.points[0].x, t.points[0].y, t.texCoords[0],
+                t.points[1].x, t.points[1].y, t.texCoords[1],
+                t.points[2].x, t.points[2].y, t.texCoords[2],
+                t.color, mesh_texture
             );
         if(PXRenderer_has(PX_STATES_LINE))
             pxDrawTriangle(

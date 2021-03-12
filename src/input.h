@@ -19,4 +19,7 @@ inline bool Input_hasWheelMovedUp(SDL_MouseWheelEvent* ev)
 }
 bool Input_exec(ubyte key);
 void Input_setKeyHandler(ubyte key, function(void, cb)(void));
+void Input_update(void);
+void Input_enable(ubyte key);
+void Input_disable(ubyte key);
 #endif

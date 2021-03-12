@@ -70,6 +70,12 @@ obj = null
 #endif
 
 #define print(format, ...) printf(__FILE__":%d " format, __LINE__, __VA_ARGS__)
+///Prints a char and jump line
+#define println_c(v) print("%c\n", v)
+///Prints a integer and jump line
+#define println_d(v) print("%d\n", v)
+///Prints a float and jump line
+#define println_f(v) print("%f\n", v)
 
 /////////////////////////////////////////////////////////////////////
 // Optimization and profiling

@@ -38,7 +38,7 @@ mat4 mat4_rotationX_mat(float angle)
     return (mat4){{
         {1,  0, 0, 0},
         {0,  c, -s, 0},
-        {0, -s, c, 0},
+        {0,  s, c, 0},
         {0,  0, 0, 1}
     }};
 }

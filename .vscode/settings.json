@@ -32,7 +32,8 @@
         "mmintrin.h": "c",
         "input.h": "c",
         "color.h": "c",
-        "light.h": "c"
+        "light.h": "c",
+        "texture.h": "c"
     },
     "C_Cpp.default.cStandard": "c11",
     "files.exclude": {

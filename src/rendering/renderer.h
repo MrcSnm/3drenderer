@@ -1,5 +1,6 @@
 #ifndef RENDERER_H
 #define RENDERER_H
+#include "texture.h"
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@ enum PX_STATES
     PX_STATES_VERTEX = 1,
     PX_STATES_LINE = 1<<1,
     PX_STATES_FILL = 1 << 2,
+    PX_STATES_TEXTURE = 1 << 3,
 };
 
 enum PX_CULL
@@ -57,6 +59,7 @@ void pxClear(uint32_t color);
 void pxRender(void);
 void pxFillRect(int x, int y, int width, int height, uint32_t color);
 void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+void pxTextureTriangle(int x0, int y0, tex2D uvA, int x1, int y1, tex2D uvB, int x2, int y2, tex2D uvC, uint32_t color, uint32_t* texture);
 void pxDrawLine(int x0, int y0, int x1, int y1, uint32_t color);
 void pxDrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 void pxDrawGrid(int color, int xOffset, int yOffset);

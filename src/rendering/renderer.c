@@ -49,7 +49,7 @@ void pxStart(void)
     SDL_TEXTUREACCESS_STREAMING,
     pxBuffer.width, pxBuffer.height);
 
-    PXRenderer_setState(PX_STATES_FILL);
+    PXRenderer_setState(PX_STATES_TEXTURE);
     PXRenderer_setCulling(PX_CULL_BACK);
 }
 
@@ -249,6 +249,67 @@ void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t col
     //Draw flat_top
     if(y1 != y2)
         _pxFillFlatTopTriangle(x1, y1, mx, y1/*my*/, x2, y2, color);
+
+}
+void pxTextureTriangle(
+int x0, int y0, tex2D uvA,
+int x1, int y1, tex2D uvB,
+int x2, int y2, tex2D uvC,
+uint32_t color, uint32_t* texture)
+{
+    //Sort ascendingly by Y
+    if(y0 > y1)
+    {
+        swap(y1, y0);
+        swap(x1, x0);
+        swap(uvB, uvA);
+    }
+    if(y1 > y2)
+    {
+        swap(y2, y1);
+        swap(x2, x1);
+        swap(uvC, uvB);
+    }
+    if(y0 > y1)
+    {
+        swap(y0, y1);
+        swap(x0, x1);
+        swap(uvA, uvB);
+    }
+
+    //Render flat bottom (upper triangle)
+    /////////////////////////////////////
+
+    float inv_slope1 = 0, inv_slope2 = 0;
+
+    int dy1 = abs(y1-y0), dy2 = abs(y2-y0);
+
+    if(dy1)
+        inv_slope1 = (float)(x1-x0)/dy1;
+    if(dy2)
+        inv_slope2 = (float)(x2-x0)/dy2;
+
+    int x_start,x_end;
+
+    uint32_t texColor = 0xFFFF00FF;
+    for(int y = y0; y <= y1; y++)
+    {
+        x_start = x1 + (y - y1)*inv_slope1;
+        x_end =   x2 + (y - y0)*inv_slope2;
+
+        if(x_start > x_end)
+            swap(x_start, x_end);
+
+        while(x_start<=x_end)
+        {
+            pxDrawPixel(x_start, y, texColor);
+            x_start++;
+        }
+    }
+
+    //Render flat top (lower triangle)
+    //////////////////////////////////
+
 
 }
 

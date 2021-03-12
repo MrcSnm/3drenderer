@@ -34,23 +34,23 @@ vec3 cube_vertices[N_CUBE_VERTICES] = {
 };
 face_t cube_faces[N_CUBE_FACES] = {
     //Front
-    {0, 1, 2,-1, .color = 0xFFFF0000},
-    {0, 2, 3,-1, .color = 0xFFFF0000},
+    {0, 1, 2,-1, /*.a_uv= {0,0}, .b_uv= {0,1}, .c_uv = {1,1}, .d_uv={0,0},*/ .color = 0xFFFF0000},
+    {0, 2, 3,-1, /*.a_uv= {0,0}, .b_uv= {1,1}, .c_uv = {1,0}, .d_uv={0,0},*/ .color = 0xFFFF0000},
     //Right
-    {3, 2, 4,-1, .color = 0xFF00FF00},
-    {3, 4, 5,-1, .color = 0xFF00FF00},
+    {3, 2, 4,-1, /*.a_uv= {0,0}, .b_uv= {0,1}, .c_uv = {1,1}, .d_uv={0,0},*/ .color = 0xFF00FF00},
+    {3, 4, 5,-1, /*.a_uv= {0,0}, .b_uv= {1,1}, .c_uv = {1,0}, .d_uv={0,0},*/ .color = 0xFF00FF00},
     //Back
-    {5, 4, 6,-1, .color = 0xFFFFFF00},
-    {5, 6, 7,-1, .color = 0xFFFFFF00},
+    {5, 4, 6,-1, /*.a_uv= {0,0}, .b_uv= {0,1}, .c_uv = {1,1}, .d_uv={0,0},*/ .color = 0xFFFFFF00},
+    {5, 6, 7,-1, /*.a_uv= {0,0}, .b_uv= {1,1}, .c_uv = {1,0}, .d_uv={0,0},*/ .color = 0xFFFFFF00},
     //Left
-    {7, 6, 1,-1, .color = 0xFF0000FF},
-    {7, 1, 0,-1, .color = 0xFF0000FF},
+    {7, 6, 1,-1, /*.a_uv= {0,0}, .b_uv= {0,1}, .c_uv = {1,1}, .d_uv={0,0},*/ .color = 0xFF0000FF},
+    {7, 1, 0,-1, /*.a_uv= {0,0}, .b_uv= {1,1}, .c_uv = {1,0}, .d_uv={0,0},*/ .color = 0xFF0000FF},
     //Top
-    {1, 6, 4,-1, .color = 0xFFFF00FF},
-    {1, 4, 2,-1, .color = 0xFFFF00FF},
+    {1, 6, 4,-1, /*.a_uv= {0,0}, .b_uv= {0,1}, .c_uv = {1,1}, .d_uv={0,0},*/ .color = 0xFFFF00FF},
+    {1, 4, 2,-1, /*.a_uv= {0,0}, .b_uv= {1,1}, .c_uv = {1,0}, .d_uv={0,0},*/ .color = 0xFFFF00FF},
     //Bottom,
-    {5, 7, 0,-1, .color = 0xFF00FFFF},
-    {5, 0, 3,-1, .color = 0xFF00FFFF}
+    {5, 7, 0,-1, /*.a_uv= {0,0}, .b_uv= {0,1}, .c_uv = {1,1}, .d_uv={0,0},*/ .color = 0xFF00FFFF},
+    {5, 0, 3,-1, /*.a_uv= {0,0}, .b_uv= {1,1}, .c_uv = {1,0}, .d_uv={0,0},*/ .color = 0xFF00FFFF}
 };
 
 void load_cube_mesh_data(void)
