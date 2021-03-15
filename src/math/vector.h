@@ -68,6 +68,7 @@ vec3 vec3_cross(vec3 a, vec3 b);
 vec3 vec3_rotateZ(vec3 v, float angle);
 vec3 vec3_rotateY(vec3 v, float angle);
 vec3 vec3_rotateX(vec3 v, float angle);
+vec3 barycentric_weights(vec2 a, vec2 b, vec2 c, vec2 p);
 void vec3_debug(vec3 v);
 
 /////////////////////////////////////////////////////////////////////
@@ -86,5 +87,6 @@ vec3 vec3_from_vec4(vec4 v);
 // vec3 vec3_rotateY(vec3 v, float angle);
 // vec3 vec3_rotateX(vec3 v, float angle);
 // void vec3_debug(vec3 v);
+
 
 #endif

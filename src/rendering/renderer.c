@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "../math/vector.h"
 #include "../utils.h"
 #include "math.h"
 
@@ -251,6 +252,29 @@ void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t col
         _pxFillFlatTopTriangle(x1, y1, mx, y1/*my*/, x2, y2, color);
 
 }
+
+void pxDrawTexel(int x, int y, uint32_t* texture,
+vec2 pA, tex2D uvA,
+vec2 pB, tex2D uvB,
+vec2 pC, tex2D uvC)
+{
+    vec3 weights = barycentric_weights(pA, pB, pC, (vec2){x, y});
+
+    float alpha = weights.x;
+    float beta = weights.y;
+    float gamma = weights.z;
+
+    float u = (uvA.u*alpha)+(uvB.u*beta)+(uvC.u*gamma);
+    
+    float v = (uvA.v*alpha)+(uvB.v*beta)+(uvC.v*gamma);
+
+    int texX = abs((int)(u*texture_width));
+    int texY = abs((int)(v*texture_height));
+
+    pxDrawPixel(x, y, texture[texX+(texY*texture_width)]);
+}
+
+
 void pxTextureTriangle(
 int x0, int y0, tex2D uvA,
 int x1, int y1, tex2D uvB,
@@ -276,6 +300,10 @@ uint32_t color, uint32_t* texture)
         swap(x0, x1);
         swap(uvA, uvB);
     }
+    
+    vec2 pA = {x0, y0};
+    vec2 pB = {x1, y1};
+    vec2 pC = {x2, y2};
 
     //Render flat bottom (upper triangle)
     /////////////////////////////////////
@@ -291,19 +319,46 @@ uint32_t color, uint32_t* texture)
 
     int x_start,x_end;
 
-    uint32_t texColor = 0xFFFF00FF;
-    for(int y = y0; y <= y1; y++)
+    if(y0-y1 != 0)
     {
-        x_start = x1 + (y - y1)*inv_slope1;
-        x_end =   x2 + (y - y0)*inv_slope2;
-
-        if(x_start > x_end)
-            swap(x_start, x_end);
-
-        while(x_start<=x_end)
+        for(int y = y0; y <= y1; y++)
         {
-            pxDrawPixel(x_start, y, texColor);
-            x_start++;
+            x_start = x1 + (y - y1)*inv_slope1;
+            x_end =   x0 + (y - y0)*inv_slope2;
+
+            if(x_start > x_end)
+                swap(x_start, x_end);
+
+            while(x_start < x_end)
+            {
+                pxDrawTexel(x_start, y, texture, pA, uvA, pB, uvB, pC, uvC);
+                x_start++;
+            }
+        }
+    }
+
+    dy1 = abs(y2-y1);
+    dy2 = abs(y2-y0);
+
+    if(dy1)
+        inv_slope1 = (float)(x2-x1)/dy1;
+    if(dy2)
+        inv_slope2 = (float)(x2-x0)/dy2;
+
+    if(y1-y2 != 0)
+    {
+        for(int y = y1; y <= y2; y++)
+        {
+            x_start = x1 + (y-y1)*inv_slope1;
+            x_end = x2 + (y-y2)*inv_slope2;
+            if(x_start > x_end)
+                swap(x_start, x_end);
+
+            while(x_start < x_end)
+            {
+                pxDrawTexel(x_start, y, texture, pA, uvA, pB, uvB, pC, uvC);
+                x_start++;
+            }
         }
     }
 

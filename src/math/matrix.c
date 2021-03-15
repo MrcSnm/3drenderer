@@ -48,9 +48,9 @@ mat4 mat4_rotationY_mat(float angle)
     float c = cos(angle);
     float s = sin(angle);
     return (mat4){{
-        {c, 0,  s, 0},
+        {c,  0, s, 0},
         {0,  1, 0, 0},
-        {-s,  0,c, 0},
+        {-s, 0, c, 0},
         {0,  0, 0, 1}
     }};
 }

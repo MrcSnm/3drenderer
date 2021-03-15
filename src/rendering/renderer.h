@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../def.h"
+#include "../math/vector.h"
 
 
 #define FPS 60
@@ -65,7 +66,10 @@ void pxDrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t col
 void pxDrawGrid(int color, int xOffset, int yOffset);
 
 void pxDestroy(void);
-
+void pxDrawTexel(int x, int y, uint32_t* texture,
+vec2 pA, tex2D uvA,
+vec2 pB, tex2D uvB,
+vec2 pC, tex2D uvC);
 
 /**
  * Unsafely draws a pixel given a linear position, no checks are performed, no multiplication either.
@@ -79,7 +83,7 @@ always_inline void pxDrawPixelU(int pos, uint32_t color)
 ///Unsafely draws a pixel given X and Y, no checks are perfomed, useful for managed primitives
 always_inline void pxDrawPixelUXY(int x, int y, uint32_t color)
 {
-    pxDrawPixelU(x+y*pxBuffer.width, color);
+    pxDrawPixelU(x+(y*pxBuffer.width), color);
 }
 
 ///Safely draws a pixel clipping it if needed
@@ -88,5 +92,6 @@ always_inline void pxDrawPixel(int x, int y, uint32_t color)
     if(x>= 0 && x < pxBuffer.width && y >= 0 && y < pxBuffer.height)
         pxDrawPixelUXY(x, y, color);
 }
+
 
 #endif

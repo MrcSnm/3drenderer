@@ -139,5 +139,26 @@ void vec3_debug(vec3 v)
     debug_end
 }
 
+/**
+ *  Gets the barycentric weight for P based on the vertices a,b,c
+ */
+vec3 barycentric_weights(vec2 a, vec2 b, vec2 c, vec2 p)
+{
+    vec2 ab = vec2_sub(b, a);
+    vec2 bc = vec2_sub(c, b);
+    vec2 ac = vec2_sub(c, a);
+    vec2 ap = vec2_sub(p, a);
+    vec2 bp = vec2_sub(p, b);
+
+    //Area triangle ABC using cross product(area of parallellogram)
+    float area_tri = (ab.x *ac.y - ab.y*ac.x);
+    //Subtriangle BCP area
+    float alpha = (bc.x*bp.y - bc.y*bp.x)/area_tri;
+    //Subtriangle ACP
+    float beta = (ap.x*ac.y - ac.x*ap.y)/area_tri;
+
+    return (vec3){alpha, beta, 1-alpha-beta};
+}
+
 vec4 vec4_from_vec3(vec3 v){return (vec4){v.x, v.y, v.z, 1};}
 vec3 vec3_from_vec4(vec4 v){return (vec3){v.x, v.y, v.z};}

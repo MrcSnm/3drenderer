@@ -150,7 +150,7 @@ void update(void)
     vec3 triangle[3];
 
     int n_faces = Array_length(mesh.faces);
-    mesh.rotation.x+=0.01;
+    // mesh.rotation.x+=0.01;
     // mesh.rotation.y+=0.01;
     // mesh.rotation.z+=0.01;
 
@@ -168,9 +168,9 @@ void update(void)
 
     // mat4 world_mat = mat4_mult_mat4(mat4_mult_mat4(mat4_mult_mat4(sm, rmX), rmY), rmZ);
     mat4 world_mat = sm;
-    world_mat = mat4_mult_mat4(rmX, world_mat);
-    world_mat = mat4_mult_mat4(rmY, world_mat);
-    world_mat = mat4_mult_mat4(rmZ, world_mat);
+    // world_mat = mat4_mult_mat4(rmX, world_mat);
+    // world_mat = mat4_mult_mat4(rmY, world_mat);
+    // world_mat = mat4_mult_mat4(rmZ, world_mat);
     world_mat = mat4_mult_mat4(tm, world_mat);
     
     for(int i = 0; i < n_faces; i++)
