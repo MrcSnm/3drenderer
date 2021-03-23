@@ -13,6 +13,7 @@ extern face_t cube_faces[N_CUBE_FACES];//6 faces, 2 triangles per face
 typedef struct mesh_t 
 {
     vec3* vertices; //Dynamic array of vertices
+    tex2D* uvs;
     face_t* faces; //Dynamic array of faces
     vec3 rotation; //Rotation with x, y
     vec3 scale;

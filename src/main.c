@@ -79,23 +79,22 @@ void setup(void)
 {
     start_input();
     pxStart();
-    load_cube_mesh_data();
     //Load hardcoded texture data
 
+    // load_cube_mesh_data();
     Image water = load_image("./assets/water.png");
+    mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj");
+    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
+
     if(water.data == null)
         return;
     // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
     mesh_texture = water.data;
     texture_width = water.width;
     texture_height = water.height;
-    printf("%p", mesh_texture);
 
     triangles_to_render = Array(triangle_t, 256);
     proj_matrix = mat4_perspective_mat( pxBuffer.height/(float)pxBuffer.width, fov_angle, znear, zfar);
-    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj");
-    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
-
 }
 
 void free_resources(void);
@@ -161,7 +160,7 @@ void update(void)
 
     int n_faces = Array_length(mesh.faces);
     // mesh.rotation.x+=0.01;
-    // mesh.rotation.y+=0.01;
+    mesh.rotation.y+=0.01;
     // mesh.rotation.z+=0.01;
 
     mesh.translation.x = -camera.x;

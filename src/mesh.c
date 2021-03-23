@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "rendering/texture.h"
 #include "array.h"
 #include "file.h"
 #include "utils.h"
@@ -74,17 +75,20 @@ mesh_t Mesh_LoadObj(char* filename)
 {
     mesh_t ret ={
         .faces = null,
+        .uvs = null,
         .vertices = null,
         .rotation = {0,0,0},
         .scale = {1,1,1},
         .translation = {0,0,0}
     };
+    tex2D tempTex;
     char* content = File_readText(filename);
     if(!content)
         return ret;
     int length = strlen(content);
 
     ret.vertices = Array(vec3, 64);
+    ret.uvs = Array(tex2D, 64);
     ret.faces = Array(face_t, 64);
 
     ret.rotation = (vec3){0,0,0};
@@ -138,18 +142,11 @@ mesh_t Mesh_LoadObj(char* filename)
                 {
                     if(c == ' ')//Advance to x, y...
                     {
-                        switch (index)
+                        ((float*)&v)[index] = atof(number);
+                        if(index == 2)
                         {
-                        case 0:
-                            v.x = atof(number);
-                            break;
-                        case 1:
-                            v.y = atof(number);
-                            break;
-                        default:
                             fprintf(stderr, "Invavlid obj file, exiting with -1");
                             exit(-1);
-                            break;
                         }
                         memset(number, 0, 16);
                         index++;
@@ -163,13 +160,17 @@ mesh_t Mesh_LoadObj(char* filename)
                     i++;
                     c = content[i];
                 }
-                v.z = atof(number);
+                ((float*)&v)[index] = atof(number);
                 memset(number, 0, 16);
                 numIndex = 0;
                 switch (mode)
                 {
                 case DEFAULT:
                     Array_push(ret.vertices, v);
+                    break;
+                case TEXTURE:
+                    tempTex = (tex2D){.u = v.x, .v = v.y};
+                    Array_push(ret.uvs, tempTex);
                     break;
                 default:
                     break;
@@ -182,7 +183,7 @@ mesh_t Mesh_LoadObj(char* filename)
                     c = content[++i];
                 }while(c == ' ');
 
-                face_t faces[3]; //v, vt, vs
+                face_t faces[3]; //v, vt, vn
                 faces[0].d = -1;
                 faces[1].d = -1;
                 faces[2].d = -1;
@@ -228,7 +229,16 @@ mesh_t Mesh_LoadObj(char* filename)
                 *((int*)currentFace+index) = atoi(number);
                 currentFace->color = 0xFFFFFFFF;
                 memset(number, 0, 16);
-                Array_push(ret.faces, faces[0]);
+                //Now handle the texture coordinates
+                
+                faces[0].a_uv = ret.uvs[faces[1].a-1];
+                faces[0].b_uv = ret.uvs[faces[1].b-1];
+                faces[0].c_uv = ret.uvs[faces[1].c-1];
+
+                if(faces[1].d != -1)
+                    faces[0].d_uv = ret.uvs[faces[1].d-1];
+                Array_push(ret.faces, faces[0]); //Push common vertex face
+
                 if(faces[0].d != -1)
                 {
                     // printf("%d\n", faces[0].d);
