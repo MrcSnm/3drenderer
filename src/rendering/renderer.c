@@ -46,7 +46,7 @@ void pxStart(void)
         return;
     );
     pxBuffer.texture = SDL_CreateTexture(renderer,
-    SDL_PIXELFORMAT_ARGB8888,
+    SDL_PIXELFORMAT_RGBA32,
     SDL_TEXTUREACCESS_STREAMING,
     pxBuffer.width, pxBuffer.height);
 
@@ -254,31 +254,46 @@ void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t col
 }
 
 void pxDrawTexel(int x, int y, uint32_t* texture,
-vec2 pA, tex2D uvA,
-vec2 pB, tex2D uvB,
-vec2 pC, tex2D uvC)
+vec4 pA, tex2D uvA,
+vec4 pB, tex2D uvB,
+vec4 pC, tex2D uvC)
 {
-    vec3 weights = barycentric_weights(pA, pB, pC, (vec2){x, y});
+    vec2 a = vec2_from_vec4(pA);
+    vec2 b = vec2_from_vec4(pB);
+    vec2 c = vec2_from_vec4(pC);
+    vec3 weights = barycentric_weights(a, b, c, (vec2){x, y});
 
     float alpha = weights.x;
     float beta = weights.y;
     float gamma = weights.z;
 
-    float u = (uvA.u*alpha)+(uvB.u*beta)+(uvC.u*gamma);
+    //Applying Old Z (W) to correct perspective
+    float rep_aw = 1/pA.w;
+    float rep_bw = 1/pB.w;
+    float rep_cw = 1/pC.w;
+
+    float u = (uvA.u*alpha*rep_aw)+(uvB.u*beta*rep_bw)+(uvC.u*gamma*rep_cw);
     
-    float v = (uvA.v*alpha)+(uvB.v*beta)+(uvC.v*gamma);
+    float v = (uvA.v*alpha*rep_aw)+(uvB.v*beta*rep_bw)+(uvC.v*gamma*rep_cw);
+
+    float w_reciprocal = (rep_aw*alpha) + (rep_bw*beta) + (rep_cw*gamma);
+    
+    //Transform 1/w into w/1 
+    w_reciprocal = 1/w_reciprocal;
+    u*= w_reciprocal;
+    v*= w_reciprocal;
 
     int texX = abs((int)(u*texture_width));
     int texY = abs((int)(v*texture_height));
 
-    pxDrawPixel(x, y, texture[texX+(texY*texture_width)]);
+    pxDrawPixel(x, y, texture[(texY * texture_width) + texX]);
 }
 
 
 void pxTextureTriangle(
-int x0, int y0, tex2D uvA,
-int x1, int y1, tex2D uvB,
-int x2, int y2, tex2D uvC,
+int x0, int y0, float z0, float w0, tex2D uvA,
+int x1, int y1, float z1, float w1, tex2D uvB,
+int x2, int y2, float z2, float w2, tex2D uvC,
 uint32_t color, uint32_t* texture)
 {
     //Sort ascendingly by Y
@@ -286,24 +301,31 @@ uint32_t color, uint32_t* texture)
     {
         swap(y1, y0);
         swap(x1, x0);
+        swap(z1, z0);
+        swap(w1, w0);
         swap(uvB, uvA);
     }
     if(y1 > y2)
     {
         swap(y2, y1);
         swap(x2, x1);
+        swap(z2, z1);
+        swap(w2, w1);
         swap(uvC, uvB);
     }
     if(y0 > y1)
     {
         swap(y0, y1);
         swap(x0, x1);
+        swap(z0, z1);
+        swap(w0, w1);
         swap(uvA, uvB);
     }
-    
-    vec2 pA = {x0, y0};
-    vec2 pB = {x1, y1};
-    vec2 pC = {x2, y2};
+
+    //Prepare points with 1/w for perspective correction
+    vec4 pA = {x0, y0, z0, w0};
+    vec4 pB = {x1, y1, z1, w1};
+    vec4 pC = {x2, y2, z2, w2};
 
     //Render flat bottom (upper triangle)
     /////////////////////////////////////

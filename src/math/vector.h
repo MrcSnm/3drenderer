@@ -76,6 +76,7 @@ void vec3_debug(vec3 v);
 /////////////////////////////////////////////////////////////////////
 vec4 vec4_from_vec3(vec3 input);
 vec3 vec3_from_vec4(vec4 v);
+vec2 vec2_from_vec4(vec4 v);
 // vec3 vec3_sub(vec3 a, vec3 b);
 // vec3 vec3_mul(vec3 a, float factor);
 // vec3 vec3_div(vec3 a, float factor);

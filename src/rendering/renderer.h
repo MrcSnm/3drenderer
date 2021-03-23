@@ -60,16 +60,16 @@ void pxClear(uint32_t color);
 void pxRender(void);
 void pxFillRect(int x, int y, int width, int height, uint32_t color);
 void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
-void pxTextureTriangle(int x0, int y0, tex2D uvA, int x1, int y1, tex2D uvB, int x2, int y2, tex2D uvC, uint32_t color, uint32_t* texture);
+void pxTextureTriangle(int x0, int y0, float z0, float w0, tex2D uvA, int x1, int y1, float z1, float w1, tex2D uvB, int x2, int y2, float z2, float w2, tex2D uvC, uint32_t color, uint32_t* texture);
 void pxDrawLine(int x0, int y0, int x1, int y1, uint32_t color);
 void pxDrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 void pxDrawGrid(int color, int xOffset, int yOffset);
 
 void pxDestroy(void);
 void pxDrawTexel(int x, int y, uint32_t* texture,
-vec2 pA, tex2D uvA,
-vec2 pB, tex2D uvB,
-vec2 pC, tex2D uvC);
+vec4 pA, tex2D uvA,
+vec4 pB, tex2D uvB,
+vec4 pC, tex2D uvC);
 
 /**
  * Unsafely draws a pixel given a linear position, no checks are performed, no multiplication either.

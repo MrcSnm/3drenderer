@@ -13,7 +13,7 @@ typedef struct face_t
 
 typedef struct triangle_t
 {
-    vec2 points[3]; 
+    vec4 points[3]; 
     tex2D texCoords[3];   
     uint32_t color;
     float avg_depth;

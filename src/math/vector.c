@@ -153,7 +153,7 @@ vec3 barycentric_weights(vec2 a, vec2 b, vec2 c, vec2 p)
     //Area triangle ABC using cross product(area of parallellogram)
     float area_tri = (ab.x *ac.y - ab.y*ac.x);
     //Subtriangle BCP area
-    float alpha = (bc.x*bp.y - bc.y*bp.x)/area_tri;
+    float alpha = (bc.x*bp.y - bp.x*bc.y)/area_tri;
     //Subtriangle ACP
     float beta = (ap.x*ac.y - ac.x*ap.y)/area_tri;
 
@@ -162,3 +162,4 @@ vec3 barycentric_weights(vec2 a, vec2 b, vec2 c, vec2 p)
 
 vec4 vec4_from_vec3(vec3 v){return (vec4){v.x, v.y, v.z, 1};}
 vec3 vec3_from_vec4(vec4 v){return (vec3){v.x, v.y, v.z};}
+vec2 vec2_from_vec4(vec4 v){return (vec2){v.x, v.y};}

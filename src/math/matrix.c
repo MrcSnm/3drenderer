@@ -51,7 +51,7 @@ mat4 mat4_rotationY_mat(float angle)
         {c,  0, s, 0},
         {0,  1, 0, 0},
         {-s, 0, c, 0},
-        {0,  0, 0, 1}
+        {0,  0, 0, 1}   
     }};
 }
 

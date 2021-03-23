@@ -7,6 +7,7 @@
             "args": [
                 "-g",
                 "${workspaceFolder}\\src\\*.c",
+                "${workspaceFolder}\\src\\**\\*.c",
                 "-IC:/SDL2/i686-w64-mingw32/include/",
                 "-LC:/SDL2/i686-w64-mingw32/lib/",
                 "-lmingw32",

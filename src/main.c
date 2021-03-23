@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <SDL2/SDL.h>
 #include <stdlib.h>
+#include "loading/upng.h"
 #include "def.h"
 #include "rendering/renderer.h"
 #include "rendering/light.h"
@@ -80,7 +81,16 @@ void setup(void)
     pxStart();
     load_cube_mesh_data();
     //Load hardcoded texture data
-    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+
+    Image water = load_image("./assets/water.png");
+    if(water.data == null)
+        return;
+    // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    mesh_texture = water.data;
+    texture_width = water.width;
+    texture_height = water.height;
+    printf("%p", mesh_texture);
+
     triangles_to_render = Array(triangle_t, 256);
     proj_matrix = mat4_perspective_mat( pxBuffer.height/(float)pxBuffer.width, fov_angle, znear, zfar);
     // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj");
@@ -168,9 +178,9 @@ void update(void)
 
     // mat4 world_mat = mat4_mult_mat4(mat4_mult_mat4(mat4_mult_mat4(sm, rmX), rmY), rmZ);
     mat4 world_mat = sm;
-    // world_mat = mat4_mult_mat4(rmX, world_mat);
-    // world_mat = mat4_mult_mat4(rmY, world_mat);
-    // world_mat = mat4_mult_mat4(rmZ, world_mat);
+    world_mat = mat4_mult_mat4(rmX, world_mat);
+    world_mat = mat4_mult_mat4(rmY, world_mat);
+    world_mat = mat4_mult_mat4(rmZ, world_mat);
     world_mat = mat4_mult_mat4(tm, world_mat);
     
     for(int i = 0; i < n_faces; i++)
@@ -227,9 +237,9 @@ void update(void)
         triangle_t projectedTriangle = {
             .points = 
             {
-                {projection[0].x, projection[0].y},
-                {projection[1].x, projection[1].y},
-                {projection[2].x, projection[2].y}
+                {projection[0].x, projection[0].y, projection[0].z, projection[0].w},
+                {projection[1].x, projection[1].y, projection[1].z, projection[1].w},
+                {projection[2].x, projection[2].y, projection[2].z, projection[2].w}
             },
             .texCoords =
             {
@@ -272,9 +282,9 @@ void render(void)
             );
         if(PXRenderer_has(PX_STATES_TEXTURE))
             pxTextureTriangle(
-                t.points[0].x, t.points[0].y, t.texCoords[0],
-                t.points[1].x, t.points[1].y, t.texCoords[1],
-                t.points[2].x, t.points[2].y, t.texCoords[2],
+                t.points[0].x, t.points[0].y, t.points[0].z, t.points[0].w, t.texCoords[0],
+                t.points[1].x, t.points[1].y, t.points[1].z, t.points[1].w, t.texCoords[1],
+                t.points[2].x, t.points[2].y, t.points[2].z, t.points[2].w, t.texCoords[2],
                 t.color, mesh_texture
             );
         if(PXRenderer_has(PX_STATES_LINE))
@@ -338,5 +348,6 @@ void destroy_window(void)
 void cleanup(void)
 {
     free_resources();
+    free_images();
     destroy_window();
 }
