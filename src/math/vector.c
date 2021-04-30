@@ -160,6 +160,15 @@ vec3 barycentric_weights(vec2 a, vec2 b, vec2 c, vec2 p)
     return (vec3){alpha, beta, 1-alpha-beta};
 }
 
+vec3 vec3_lerp(vec3 from, vec3 to, float rate)
+{
+    return (vec3){
+        from.x + rate*(to.x - from.x),
+        from.y + rate*(to.y - from.y),
+        from.z + rate*(to.z - from.z)
+    };
+}
+
 vec4 vec4_from_vec3(vec3 v){return (vec4){v.x, v.y, v.z, 1};}
 vec3 vec3_from_vec4(vec4 v){return (vec3){v.x, v.y, v.z};}
 vec2 vec2_from_vec4(vec4 v){return (vec2){v.x, v.y};}

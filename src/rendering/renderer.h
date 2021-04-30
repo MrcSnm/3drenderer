@@ -35,6 +35,7 @@ typedef struct PixelBuffer
 {
     SDL_Texture* texture;
     uint32_t* data;
+    float* z_buffer;
     int width, height, halfW, halfH;
     uint32_t length;
 } PixelBuffer;
@@ -57,11 +58,13 @@ void PXRenderer_setCulling(short PX_CULL);
 void pxStart(void);
 bool initialize_window(void);
 void pxClear(uint32_t color);
+void pxClearZBuffer(void);
 void pxRender(void);
 void pxFillRect(int x, int y, int width, int height, uint32_t color);
-void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+void pxFillTriangle(int x0, int y0, float z0, float w0, int x1, int y1, float z1, float w1, int x2, int y2, float z2, float w2, uint32_t color);
 void pxTextureTriangle(int x0, int y0, float z0, float w0, tex2D uvA, int x1, int y1, float z1, float w1, tex2D uvB, int x2, int y2, float z2, float w2, tex2D uvC, uint32_t color, uint32_t* texture);
 void pxDrawLine(int x0, int y0, int x1, int y1, uint32_t color);
+void pxDrawTrianglePixel(int x, int y, uint32_t color, vec4 pA, vec4 pB, vec4 pC);
 void pxDrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 void pxDrawGrid(int color, int xOffset, int yOffset);
 

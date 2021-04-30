@@ -106,6 +106,23 @@ mat4 mat4_perspective_mat(float aspect, float fov, float znear, float zfar)
     }};
 }
 
+mat4 mat4_look_at(vec3 eye, vec3 target, vec3 up)
+{
+    vec3 z = vec3_sub(target, eye);
+    vec3_normallize(&z);
+    vec3 x = vec3_cross(up, z);
+    vec3_normallize(&x);
+    vec3 y = vec3_cross(z, x);
+
+    //Inverse_Rotation * -Eye translation matrix
+    return (mat4){{
+        {x.x, x.y, x.z, -vec3_dot(x, eye)},
+        {y.x, y.y, y.z, -vec3_dot(y, eye)},
+        {z.x, z.y, z.z, -vec3_dot(z, eye)},
+        {   0,  0,   0,                 1}
+    }};
+}
+
 vec4 mat4_project(mat4 projectionMatrix, vec4 input)
 {
     vec4 ret = mat4_mult_vec4(projectionMatrix, input);

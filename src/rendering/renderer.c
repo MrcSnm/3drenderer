@@ -1,5 +1,7 @@
 #include "renderer.h"
+#include <string.h>
 #include "../math/vector.h"
+#include "../math/math_utils.h"
 #include "../utils.h"
 #include "math.h"
 
@@ -43,6 +45,10 @@ void pxStart(void)
     pxBuffer.halfW = window_width/2;
     pxBuffer.data = SAFE_NEW(pxBuffer.data, uint32_t, pxBuffer.length, 
         printf("Could not allocate enough memory for pixelbuffer");
+        return;
+    );
+    pxBuffer.z_buffer = SAFE_NEW(pxBuffer.z_buffer, float, pxBuffer.length, 
+        printf("Could not allocate enough memory for z buffer");
         return;
     );
     pxBuffer.texture = SDL_CreateTexture(renderer,
@@ -107,6 +113,13 @@ void pxClear(uint32_t color)
     for_unroll4(pxBuffer.length,
         pxBuffer.data[unroll_i] = color;
     );
+}
+void pxClearZBuffer(void)
+{
+    for_unroll4(pxBuffer.length, 
+        pxBuffer.z_buffer[unroll_i] = 1.0f;
+    )
+    // memset(pxBuffer.z_buffer, 1, pxBuffer.length);
 }
 
 void pxDrawGrid(int color, int xOffset, int yOffset)
@@ -183,48 +196,53 @@ void pxFillRect(int x, int y, int width, int height, uint32_t color)
     }
 }
 
-static void _pxFillFlatBotTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void pxDrawTrianglePixel(int x, int y, uint32_t color,
+vec4 pA, vec4 pB, vec4 pC)
 {
-    //Accumulators to sum
-    float length = y1 - y0; //Y1 is always greater than y0
-    float x0t = x0, x2t = x0;
-    
-    //Find the step 1 length
-    float inc_x = (x1-x0)/length;
-    float inc_x2 = (x2-x0)/length;
+    vec2 a = vec2_from_vec4(pA);
+    vec2 b = vec2_from_vec4(pB);
+    vec2 c = vec2_from_vec4(pC);
+    vec3 weights = barycentric_weights(a, b, c, (vec2){x, y});
 
-    //Walk from (x0, y0) to (x1, y1)
-    for(; y0 <= y1 ;y0++)
+    float alpha = weights.x;
+    float beta = weights.y;
+    float gamma = weights.z;
+    alpha = fmax(0, alpha);
+    beta = fmax(0, beta);
+    gamma = fmax(0, gamma);
+    
+
+    //Applying Old Z (W) to correct perspective
+    float rep_aw = 1/pA.w;
+    float rep_bw = 1/pB.w;
+    float rep_cw = 1/pC.w;
+
+    float w_reciprocal = (rep_aw*alpha) + (rep_bw*beta) + (rep_cw*gamma);
+
+    //Transform 1/w into w/1 
+    //Make the closer values have smaller values
+    w_reciprocal = 1.0f - w_reciprocal;
+
+    //Only draw the pixel if the depth value is less than the previously stored
+    if(w_reciprocal < pxBuffer.z_buffer[y*pxBuffer.width+x])
     {
-        pxDrawLine(x0t, y0, x2t, y0, color);//Draw horizontal lines
-        x0t+= inc_x;
-        x2t+= inc_x2;
+        pxDrawPixel(x, y, color);
+        //Saves into the z_buffer w_recriprocal
+        pxBuffer.z_buffer[y*pxBuffer.width + x] = w_reciprocal;
     }
 }
-static void _pxFillFlatTopTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
-{
-    //Accumulators to sum, start from the common vertex
-    float x0t = x2, x2t = x2;
-    
-    //Find the step length
-    float length = y2 - y1; //Y1 is always greater than y0
-    float inc_x = (x0-x2)/length;
-    float inc_x2 = (x1-x2)/length; //Walk to x1
 
-    //Walk from (x0, y0) to (x1, y1)
-    for(; y2 >= y0 ;y2--)
-    {
-        pxDrawLine(x0t, y2, x2t, y2, color);//Draw horizontal lines
-        x0t+= inc_x;
-        x2t+= inc_x2;
-    }
-}
-
-void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void pxFillTriangle(
+int x0, int y0, float z0, float w0,
+int x1, int y1, float z1, float w1,
+int x2, int y2, float z2, float w2,
+uint32_t color)
 {
     //Sort Y, y2 > y1 > y0
     if(y0 > y1)
     {
+        swap(z1, z0);
+        swap(w1, w0);
         swap(y1, y0);
         swap(x1, x0);
     }
@@ -232,24 +250,77 @@ void pxFillTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t col
     {
         swap(y2, y1);
         swap(x2, x1);
+        swap(z2, z1);
+        swap(w2, w1);
     }
     if(y0 > y1)
     {
         swap(y0, y1);
         swap(x0, x1);
+        swap(z0, z1);
+        swap(w0, w1);
     }
 
     //Finding middle x and y using trinagle similarity
     //int my = y1; (Dont do it on release)    
 
-    int mx = (x2-x0)*(y1-y0)/(float)(y2-y0) + x0;
+    float inv_slope1 = 0;
+    float inv_slope2 = 0;
+    int dy1 = abs(y1-y0), dy2 = abs(y2-y0);
 
-    //Draw flat_bot
-    if(y0 != y1)
-        _pxFillFlatBotTriangle(x0, y0, x1, y1, mx, y1/*my*/, color);
-    //Draw flat_top
-    if(y1 != y2)
-        _pxFillFlatTopTriangle(x1, y1, mx, y1/*my*/, x2, y2, color);
+    if(dy1)
+        inv_slope1 = (float)(x1-x0)/dy1;
+    if(dy2)
+        inv_slope2 = (float)(x2-x0)/dy2;
+
+    int x_start,x_end;
+
+    vec4 pA = {x0, y0, z0, w0};
+    vec4 pB = {x1, y1, z1, w1};
+    vec4 pC = {x2, y2, z2, w2};
+
+    if(y0-y1 != 0)
+    {
+        for(int y = y0; y <= y1; y++)
+        {
+            x_start = x1 + (y - y1)*inv_slope1;
+            x_end =   x0 + (y - y0)*inv_slope2;
+
+            if(x_start > x_end)
+                swap(x_start, x_end);
+
+            while(x_start <= x_end)
+            {
+                pxDrawTrianglePixel(x_start, y, color, pA, pB, pC);
+                x_start++;
+            }
+        }
+    }
+
+    dy1 = abs(y2-y1);
+    dy2 = abs(y2-y0);
+
+    if(dy1)
+        inv_slope1 = (float)(x2-x1)/dy1;
+    if(dy2)
+        inv_slope2 = (float)(x2-x0)/dy2;
+
+    if(y1-y2 != 0)
+    {
+        for(int y = y1; y <= y2; y++)
+        {
+            x_start = x1 + (y-y1)*inv_slope1;
+            x_end = x2 + (y-y2)*inv_slope2;
+            if(x_start > x_end)
+                swap(x_start, x_end);
+
+            while(x_start < x_end)
+            {
+                pxDrawTrianglePixel(x_start, y, color, pA, pB, pC);
+                x_start++;
+            }
+        }
+    }
 
 }
 
@@ -272,21 +343,30 @@ vec4 pC, tex2D uvC)
     float rep_bw = 1/pB.w;
     float rep_cw = 1/pC.w;
 
+    // Perform the interpolation of all U/w and V/w values using barycentric weights and a factor of 1/w
     float u = (uvA.u*alpha*rep_aw)+(uvB.u*beta*rep_bw)+(uvC.u*gamma*rep_cw);
     
     float v = (uvA.v*alpha*rep_aw)+(uvB.v*beta*rep_bw)+(uvC.v*gamma*rep_cw);
 
+    // Also interpolate the value of 1/w for the current pixel
     float w_reciprocal = (rep_aw*alpha) + (rep_bw*beta) + (rep_cw*gamma);
-    
-    //Transform 1/w into w/1 
-    w_reciprocal = 1/w_reciprocal;
-    u*= w_reciprocal;
-    v*= w_reciprocal;
 
-    int texX = abs((int)(u*texture_width));
-    int texY = abs((int)(v*texture_height));
+    u/= w_reciprocal;
+    v/= w_reciprocal;
 
-    pxDrawPixel(x, y, texture[(texY * texture_width) + texX]);
+    int texX = abs((int)(u*texture_width)) % texture_width;
+    int texY = abs((int)(v*texture_height)) % texture_height;
+
+    //Make the closer values have smaller values
+    w_reciprocal = 1.0f - w_reciprocal;
+
+    //Only draw the pixel if the depth value is less than the previously stored
+    if(w_reciprocal < pxBuffer.z_buffer[y*pxBuffer.width+x])
+    {
+        pxDrawPixel(x, y, texture[(texY * texture_width) + texX]);
+        //Saves into the z_buffer w_recriprocal
+        pxBuffer.z_buffer[y*pxBuffer.width + x] = w_reciprocal;
+    }
 }
 
 
@@ -435,6 +515,7 @@ void pxRender(void)
 void pxDestroy(void)
 {
     free(pxBuffer.data);
+    free(pxBuffer.z_buffer);
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
 }

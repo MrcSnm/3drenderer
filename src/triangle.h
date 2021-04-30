@@ -16,7 +16,6 @@ typedef struct triangle_t
     vec4 points[3]; 
     tex2D texCoords[3];   
     uint32_t color;
-    float avg_depth;
 } triangle_t;
 
 // TODO: Draw a textured triangle

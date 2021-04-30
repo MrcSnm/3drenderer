@@ -17,6 +17,7 @@ typedef unsigned long ulong;
 /////////////////////////////////////////////////////////////////////
 // D Keywords
 /////////////////////////////////////////////////////////////////////
+#define out(type) type*
 #define null (void*)0
 #ifndef typeof
 #define typeof __typeof__
@@ -70,6 +71,7 @@ obj = null
 #endif
 
 #define print(format, ...) printf(__FILE__":%d " format, __LINE__, __VA_ARGS__)
+#define println(format, ...) print(format "\n", __VA_ARGS__)
 ///Prints a char and jump line
 #define println_c(v) print("%c\n", v)
 ///Prints a integer and jump line
@@ -87,10 +89,10 @@ obj = null
 ///Put it on file top to define the static clock
 #define profiling_static static clock_t _prof_begin_st, _prof_end_st;
 ///Start profiling on static clock
-#define profiling_static_start _prof_beging_st = clock();
+#define profiling_static_start _prof_begin_st = clock();
 ///End profiling the static clock
-#define profiling_static_end _prof_end_st = clock(); \
-print("Time spent on %s: %lf secs\n", name, (double)(_prof_end - _prof_begin)/CLOCKS_PER_SEC);
+#define profiling_static_end(name) _prof_end_st = clock(); \
+print("Time spent on %s: %lf secs\n", name, (double)(_prof_end_st - _prof_begin_st)/CLOCKS_PER_SEC);
 
 
 #define profiling_start {  \
@@ -103,9 +105,9 @@ print("Time spent on %s: %lf secs\n", name, (double)(_prof_end - _prof_begin)/CL
 #else
 #define profiling_static
 #define profiling_static_start
-#define profiling_static_end
+#define profiling_static_end(name)
 #define profiling_start
-#define profiling_end
+#define profiling_end(name)
 #endif
 
 /////////////////////////////////////////////////////////////////////

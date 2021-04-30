@@ -169,7 +169,7 @@ mesh_t Mesh_LoadObj(char* filename)
                     Array_push(ret.vertices, v);
                     break;
                 case TEXTURE:
-                    tempTex = (tex2D){.u = v.x, .v = v.y};
+                    tempTex = (tex2D){.u = v.x, .v = 1-v.y};
                     Array_push(ret.uvs, tempTex);
                     break;
                 default:
