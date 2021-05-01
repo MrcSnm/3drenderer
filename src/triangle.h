@@ -14,11 +14,12 @@ typedef struct face_t
 typedef struct triangle_t
 {
     vec4 points[3]; 
-    tex2D texCoords[3];   
+    tex2D texCoords[3];
+    Image* texture;
     uint32_t color;
 } triangle_t;
 
-// TODO: Draw a textured triangle
+vec3 Triangle_getNormal(vec3 a, vec3 b, vec3 c);
 
 
 #endif
