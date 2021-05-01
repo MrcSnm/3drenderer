@@ -30,6 +30,8 @@ float fov_angle = M_PI/3; //30 degrees
 float znear = 0.1;
 float zfar = 100;
 float delta_time = 0;
+
+mesh_t* game_meshes;
 mat4 proj_matrix;
 mat4 world_matrix;
 mat4 view_matrix;
@@ -102,7 +104,6 @@ void start_input()
     Input_setKeyHandler('D', &move_camera_right);
     Input_setKeyHandler('J', &move_camera_up); //Up
     Input_setKeyHandler('K', &move_camera_down); //Down
-
 }
 
 void setup(void)
@@ -112,16 +113,16 @@ void setup(void)
     //Load hardcoded texture data
 
     // load_cube_mesh_data();
-    Image water = load_image("./assets/cube.png");
-    mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj");
-    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
+    game_meshes = Mesh_GetAllMeshes();
+    mesh_t* drone = Mesh_LoadMesh("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj",
+    "C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.png",
+    (vec3){-3,0,0}, (vec3){1,1,1}, (vec3){0,0,0});
 
-    if(water.data == null)
-        return;
-    // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-    mesh_texture = water.data;
-    texture_width = water.width;
-    texture_height = water.height;
+    mesh_t* droner = Mesh_LoadMesh("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj",
+    "C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.png",
+    (vec3){3,0,0}, (vec3){1,1,1}, (vec3){0,0,0});
+    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\drone.obj");
+    // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
 
     triangles_to_render = Array(triangle_t, 256);
 
@@ -182,14 +183,6 @@ void process_input(void)
     Input_update();
 }
 
-int triangles_sort_asc(void* a, void *b)
-{
-    //Legacy, for painter's algorithm
-    // float fa = ((triangle_t*)a)->avg_depth;
-    // float fb = ((triangle_t*)b)->avg_depth;
-    // return (fa > fb) - (fa < fb);
-    return 0;
-}
 
 void update(void)
 {
@@ -201,146 +194,134 @@ void update(void)
     delta_time = (SDL_GetTicks() - previousFrameDuration) / 1000.0f;
     vec3 triangle[3];
 
-    int n_faces = Array_length(mesh.faces);
-    // mesh.rotation.x+=0.01;
-    // mesh.rotation.y+=0.01;
-    // mesh.rotation.z+=0.01;
 
-    mesh.translation.x = -camera.position.x;
-    //Translate the vertexes away from the camera
-    mesh.translation.y = -camera.position.y;
-    mesh.translation.z = -camera.position.z+5;
-
-    //Create a scale matrix
-    mat4 sm = mat4_scale_mat(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-    mat4 tm = mat4_translation_mat(mesh.translation.x, mesh.translation.y, mesh.translation.z);
-    mat4 rmX = mat4_rotationX_mat(mesh.rotation.x);
-    mat4 rmY = mat4_rotationY_mat(mesh.rotation.y);
-    mat4 rmZ = mat4_rotationZ_mat(mesh.rotation.z);
-
-    vec3 target = {0, 0, 1};
-    mat4 camera_yaw_rotation = mat4_rotationY_mat(camera.yaw);
-    camera.direction = vec3_from_vec4(mat4_mult_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
-
-    target = vec3_add(camera.position, camera.direction);
-    static vec3 up_direction = {0, 1, 0};
-
-    view_matrix = mat4_look_at(camera.position, target, up_direction);
-
-    // mat4 world_mat = mat4_mult_mat4(mat4_mult_mat4(mat4_mult_mat4(sm, rmX), rmY), rmZ);
-    world_matrix = sm;
-    world_matrix = mat4_mult_mat4(rmX, world_matrix);
-    world_matrix = mat4_mult_mat4(rmY, world_matrix);
-    world_matrix = mat4_mult_mat4(rmZ, world_matrix);
-    world_matrix = mat4_mult_mat4(tm,  world_matrix);
-    
-    for(int i = 0; i < n_faces; i++)
+    for(int mesh_index = 0; mesh_index < Array_length(game_meshes); mesh_index++)
     {
-        face_t currentFace = mesh.faces[i];
-        triangle[0] = mesh.vertices[currentFace.a];
-        triangle[1] = mesh.vertices[currentFace.b];
-        triangle[2] = mesh.vertices[currentFace.c];
+        mesh_t* mesh = &game_meshes[mesh_index];
+        int n_faces = Array_length(mesh->faces);
 
-        vec4 transformed_vertex[3];
-        for(int j = 0; j < 3; j++)
-        {
-            transformed_vertex[j] = vec4_from_vec3(triangle[j]);
-            //Apply transformation for each vertex
-            transformed_vertex[j] = mat4_mult_vec4(world_matrix, transformed_vertex[j]);
-            transformed_vertex[j] = mat4_mult_vec4(view_matrix, transformed_vertex[j]);
-        }
+        //Create a scale matrix
+        mat4 sm = mat4_scale_mat(mesh->scale.x, mesh->scale.y, mesh->scale.z);
+        mat4 tm = mat4_translation_mat(mesh->translation.x, mesh->translation.y, mesh->translation.z);
+        mat4 rmX = mat4_rotationX_mat(mesh->rotation.x);
+        mat4 rmY = mat4_rotationY_mat(mesh->rotation.y);
+        mat4 rmZ = mat4_rotationZ_mat(mesh->rotation.z);
 
-        if(pxRenderer.cullType == PX_CULL_BACK)
-        {
-            if(culling(
-                vec3_from_vec4(transformed_vertex[0]),
-                vec3_from_vec4(transformed_vertex[1]),
-                vec3_from_vec4(transformed_vertex[2]),
-             camera.position))
-                continue;
-        }
+        vec3 target = {0, 0, 1};
+        mat4 camera_yaw_rotation = mat4_rotationY_mat(camera.yaw);
+        camera.direction = vec3_from_vec4(mat4_mult_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
 
-        vec3 vA = vec3_from_vec4(transformed_vertex[0]);
-        vec3 vB = vec3_from_vec4(transformed_vertex[1]);
-        vec3 vC = vec3_from_vec4(transformed_vertex[2]);
+        target = vec3_add(camera.position, camera.direction);
+        static vec3 up_direction = {0, 1, 0};
 
-        //Clipping phase
-        polygon_t polygon = create_polygon_triangle(
-            vA, vB, vC,
-            currentFace.a_uv, currentFace.b_uv, currentFace.c_uv
-        );
+        view_matrix = mat4_look_at(camera.position, target, up_direction);
+
+        // mat4 world_mat = mat4_mult_mat4(mat4_mult_mat4(mat4_mult_mat4(sm, rmX), rmY), rmZ);
+        world_matrix = sm;
+        world_matrix = mat4_mult_mat4(rmX, world_matrix);
+        world_matrix = mat4_mult_mat4(rmY, world_matrix);
+        world_matrix = mat4_mult_mat4(rmZ, world_matrix);
+        world_matrix = mat4_mult_mat4(tm,  world_matrix);
         
-        //Polygon from triangle
-
-        clip_polygon(&polygon);
-
-        //Break polygon into triangles
-        triangle_t polygon_triangles[MAX_TRIANGLES_PER_POLYGON];
-        int num_triangles = 0;
-        create_triangles_from_polygon(&polygon, polygon_triangles, &num_triangles);
-
-        float lightRate = light_flatShading(vA, vB, vC, (vec3){0, 0, 1.0});
-        uint32_t finalColor = color_argb_multiply(0xFFFFFFFF, lightRate, false);
-
-        for(int t = 0; t < num_triangles; t++)        
+        for(int i = 0; i < n_faces; i++)
         {
-            vec4 projection[3];
-            triangle_t polygon_triangle = polygon_triangles[t];
+            face_t currentFace = mesh->faces[i];
+            triangle[0] = mesh->vertices[currentFace.a];
+            triangle[1] = mesh->vertices[currentFace.b];
+            triangle[2] = mesh->vertices[currentFace.c];
+
+            vec4 transformed_vertex[3];
             for(int j = 0; j < 3; j++)
             {
-                projection[j] = mat4_project(proj_matrix, polygon_triangle.points[j]);
-                
-                //Invert Y
-                projection[j].y*=-1;
-
-                // //Scale to the viewport
-                projection[j].x *= pxBuffer.halfW;
-                projection[j].y *= pxBuffer.halfH;
-
-
-                //Translate to the screen center
-                projection[j].x+= pxBuffer.halfW;
-                projection[j].y+= pxBuffer.halfH;
-
+                transformed_vertex[j] = vec4_from_vec3(triangle[j]);
+                //Apply transformation for each vertex
+                transformed_vertex[j] = mat4_mult_vec4(world_matrix, transformed_vertex[j]);
+                transformed_vertex[j] = mat4_mult_vec4(view_matrix, transformed_vertex[j]);
             }
-            triangle_t triangle_to_render = {
-                .points = 
+
+            if(pxRenderer.cullType == PX_CULL_BACK)
+            {
+                if(culling(
+                    vec3_from_vec4(transformed_vertex[0]),
+                    vec3_from_vec4(transformed_vertex[1]),
+                    vec3_from_vec4(transformed_vertex[2]),
+                camera.position))
+                    continue;
+            }
+
+            vec3 vA = vec3_from_vec4(transformed_vertex[0]);
+            vec3 vB = vec3_from_vec4(transformed_vertex[1]);
+            vec3 vC = vec3_from_vec4(transformed_vertex[2]);
+
+            //Clipping phase
+            polygon_t polygon = create_polygon_triangle(
+                vA, vB, vC,
+                currentFace.a_uv, currentFace.b_uv, currentFace.c_uv
+            );
+            
+            //Polygon from triangle
+
+            clip_polygon(&polygon);
+
+            //Break polygon into triangles
+            triangle_t polygon_triangles[MAX_TRIANGLES_PER_POLYGON];
+            int num_triangles = 0;
+            create_triangles_from_polygon(&polygon, polygon_triangles, &num_triangles);
+
+            float lightRate = light_flatShading(vA, vB, vC, (vec3){0, 0, 1.0});
+            uint32_t finalColor = color_argb_multiply(0xFFFFFFFF, lightRate, false);
+
+            for(int t = 0; t < num_triangles; t++)        
+            {
+                vec4 projection[3];
+                triangle_t polygon_triangle = polygon_triangles[t];
+                for(int j = 0; j < 3; j++)
                 {
-                    {projection[0].x, projection[0].y, projection[0].z, projection[0].w},
-                    {projection[1].x, projection[1].y, projection[1].z, projection[1].w},
-                    {projection[2].x, projection[2].y, projection[2].z, projection[2].w}
-                },
-                .texCoords =
-                {
-                    {polygon_triangle.texCoords[0].u, polygon_triangle.texCoords[0].v},
-                    {polygon_triangle.texCoords[1].u, polygon_triangle.texCoords[1].v},
-                    {polygon_triangle.texCoords[2].u, polygon_triangle.texCoords[2].v}
-                },
-                .color = finalColor,
-            };
-            //Save the projected triangle
-            Array_push(triangles_to_render, triangle_to_render);
+                    projection[j] = mat4_project(proj_matrix, polygon_triangle.points[j]);
+                    
+                    //Invert Y
+                    projection[j].y*=-1;
+
+                    // //Scale to the viewport
+                    projection[j].x *= pxBuffer.halfW;
+                    projection[j].y *= pxBuffer.halfH;
+
+
+                    //Translate to the screen center
+                    projection[j].x+= pxBuffer.halfW;
+                    projection[j].y+= pxBuffer.halfH;
+
+                }
+                triangle_t triangle_to_render = {
+                    .points = 
+                    {
+                        {projection[0].x, projection[0].y, projection[0].z, projection[0].w},
+                        {projection[1].x, projection[1].y, projection[1].z, projection[1].w},
+                        {projection[2].x, projection[2].y, projection[2].z, projection[2].w}
+                    },
+                    .texCoords =
+                    {
+                        {polygon_triangle.texCoords[0].u, polygon_triangle.texCoords[0].v},
+                        {polygon_triangle.texCoords[1].u, polygon_triangle.texCoords[1].v},
+                        {polygon_triangle.texCoords[2].u, polygon_triangle.texCoords[2].v}
+                    },
+                    .color = finalColor,
+                };
+                //Save the projected triangle
+                Array_push(triangles_to_render, triangle_to_render);
+            }
         }
     }
-    // qsort(triangles_to_render, Array_length(triangles_to_render), sizeof(triangle_t), &triangles_sort_asc);
-    // insert_sort(triangles_to_render, Array_length(triangles_to_render), &triangles_sort_asc);
     previousFrameDuration = SDL_GetTicks();
-
-    //Sort the triangles
 }
 void render(void)
 {
     pxClear(0);
     pxClearZBuffer();
-    // pxDrawGrid(0xFFFFFFFF, 50, 50);
     int n_triangles = Array_length(triangles_to_render);
     for(int i = 0; i < n_triangles; i++)
     {
         triangle_t t = triangles_to_render[i];
-        // int r, g, b;
-        // r = rand() %255;
-        // g = rand() %255;
-        // b = rand() %255;
 
         if(PXRenderer_has(PX_STATES_FILL))
             pxFillTriangle(
@@ -350,13 +331,13 @@ void render(void)
                 t.color
                 // 0xFF000000 + (r<<16) +(g<<8)+b
             );
-        if(PXRenderer_has(PX_STATES_TEXTURE))
-            pxTextureTriangle(
-                t.points[0].x, t.points[0].y, t.points[0].z, t.points[0].w, t.texCoords[0],
-                t.points[1].x, t.points[1].y, t.points[1].z, t.points[1].w, t.texCoords[1],
-                t.points[2].x, t.points[2].y, t.points[2].z, t.points[2].w, t.texCoords[2],
-                t.color, mesh_texture
-            );
+        // if(PXRenderer_has(PX_STATES_TEXTURE))
+        //     pxTextureTriangle(
+        //         t.points[0].x, t.points[0].y, t.points[0].z, t.points[0].w, t.texCoords[0],
+        //         t.points[1].x, t.points[1].y, t.points[1].z, t.points[1].w, t.texCoords[1],
+        //         t.points[2].x, t.points[2].y, t.points[2].z, t.points[2].w, t.texCoords[2],
+        //         t.color, mesh->texture
+        //     );
         if(PXRenderer_has(PX_STATES_LINE))
             pxDrawTriangle(
                 t.points[0].x, t.points[0].y,
@@ -373,14 +354,7 @@ void render(void)
 
         }
     }
-
-    // const int t = 300;
-    // pxFillTriangle(t+100, t+100, t+200, t-100, t+300, t+100, 0xFFFF0000);
-    // pxDrawTriangle(t+100, t+100, t+200, t-100, t+300, t+100, 0xFFFFFF00);
-    // pxFillTriangle(t+100, t+100, t+200, t+300, t+300, t+100, 0xFFFF0000);
-    // pxDrawTriangle(t+100, t+100, t+200, t+300, t+300, t+100, 0xFFFFFF00);
     pxRender();
-    SDL_RenderPresent(renderer);
     Array_clear(triangles_to_render);
 }
 
@@ -406,8 +380,7 @@ int main(int argc, char* argv[])
 
 void free_resources(void)
 {
-    Array_destroy(mesh.vertices);
-    Array_destroy(mesh.faces);
+    Mesh_dispose();
 }
 
 void destroy_window(void)
@@ -418,7 +391,7 @@ void destroy_window(void)
 
 void cleanup(void)
 {
-    free_resources();
     free_images();
+    free_resources();
     destroy_window();
 }

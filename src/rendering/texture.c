@@ -6,18 +6,17 @@
 const uint8_t REDBRICK_TEXTURE[] =
 #include "_red_brick_texture.h"
 ;
-
 static upng_t** imagesLoaded = null;
+static Image* loaded_images = null;
 static size_t imagesCount = 0;
 
-uint32_t* mesh_texture = null;
-int texture_width = 64;
-int texture_height = 64;
-
-Image load_image(char* path)
+Image* load_image(char* path)
 {
     if(imagesCount == 0)
+    {
         imagesLoaded = NEW(upng_t*, 1);
+        loaded_images = Array(Image, 1);
+    }
     else
         imagesLoaded = realloc(imagesLoaded, sizeof(upng_t*)*imagesCount+1);
     Image ret = {.data = null, .width = 0,  .height = 0};
@@ -30,11 +29,12 @@ Image load_image(char* path)
             ret.data = (uint32_t*)upng_get_buffer(file);
             ret.width = upng_get_width(file);
             ret.height = upng_get_height(file);
-            imagesCount++;
-            return ret;
+            Array_push(loaded_images, ret);
+            imagesLoaded[imagesCount++] = file;
+            return &loaded_images[Array_length(loaded_images)-1];
         }
     }
-    return ret;
+    return null;
 }
 
 void free_images(void)

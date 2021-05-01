@@ -14,54 +14,21 @@ void face_debug(face_t f)
     debug_end
 }
 
-mesh_t mesh =
+static mesh_t* meshes;
+mesh_t* New_Mesh()
 {
-    .vertices = null,
-    .faces = null,
-    .translation = {0,0,0},
-    .scale = {1,1,1}, 
-    .rotation = {0,0,0}
-};
-
-vec3 cube_vertices[N_CUBE_VERTICES] = {
-    { .x = -1, .y = -1, .z = -1 }, // 1
-    { .x = -1, .y =  1, .z = -1 }, // 2
-    { .x =  1, .y =  1, .z = -1 }, // 3
-    { .x =  1, .y = -1, .z = -1 }, // 4
-    { .x =  1, .y =  1, .z =  1 }, // 5
-    { .x =  1, .y = -1, .z =  1 }, // 6
-    { .x = -1, .y =  1, .z =  1 }, // 7
-    { .x = -1, .y = -1, .z =  1 }  // 8
-};
-face_t cube_faces[N_CUBE_FACES] = {
-    //Front
-    {0, 1, 2,-1, .a_uv= {0,1}, .b_uv= {0,0}, .c_uv = {1,0}, .d_uv={0,1}, .color = 0xFFFF0000},
-    {0, 2, 3,-1, .a_uv= {0,1}, .b_uv= {1,0}, .c_uv = {1,1}, .d_uv={0,1}, .color = 0xFFFF0000},
-    //Right
-    {3, 2, 4,-1, .a_uv= {0,1}, .b_uv= {0,0}, .c_uv = {1,0}, .d_uv={0,1}, .color = 0xFF00FF00},
-    {3, 4, 5,-1, .a_uv= {0,1}, .b_uv= {1,0}, .c_uv = {1,1}, .d_uv={0,1}, .color = 0xFF00FF00},
-    //Back
-    {5, 4, 6,-1, .a_uv= {0,1}, .b_uv= {0,0}, .c_uv = {1,0}, .d_uv={0,1}, .color = 0xFFFFFF00},
-    {5, 6, 7,-1, .a_uv= {0,1}, .b_uv= {1,0}, .c_uv = {1,1}, .d_uv={0,1}, .color = 0xFFFFFF00},
-    //Left
-    {7, 6, 1,-1, .a_uv= {0,1}, .b_uv= {0,0}, .c_uv = {1,0}, .d_uv={0,1}, .color = 0xFF0000FF},
-    {7, 1, 0,-1, .a_uv= {0,1}, .b_uv= {1,0}, .c_uv = {1,1}, .d_uv={0,1}, .color = 0xFF0000FF},
-    //Top
-    {1, 6, 4,-1, .a_uv= {0,1}, .b_uv= {0,0}, .c_uv = {1,0}, .d_uv={0,1}, .color = 0xFFFF00FF},
-    {1, 4, 2,-1, .a_uv= {0,1}, .b_uv= {1,0}, .c_uv = {1,1}, .d_uv={0,1}, .color = 0xFFFF00FF},
-    //Bottom,
-    {5, 7, 0,-1, .a_uv= {0,1}, .b_uv= {0,0}, .c_uv = {1,0}, .d_uv={0,1}, .color = 0xFF00FFFF},
-    {5, 0, 3,-1, .a_uv= {0,1}, .b_uv= {1,0}, .c_uv = {1,1}, .d_uv={0,1}, .color = 0xFF00FFFF}
-};
-
-void load_cube_mesh_data(void)
-{
-    mesh.vertices = Array(vec3, N_CUBE_VERTICES);
-    for(int i = 0; i < N_CUBE_VERTICES; i++)
-        Array_push(mesh.vertices, cube_vertices[i]);
-    mesh.faces = Array(face_t, N_CUBE_FACES);
-    for(int i = 0; i < N_CUBE_FACES; i++)
-        Array_push(mesh.faces, cube_faces[i]);
+    if(meshes == null)
+        meshes = Array(mesh_t, 8);
+    mesh_t mesh = (mesh_t){
+        .vertices = null,
+        .texture = null,
+        .faces = null,
+        .translation = {0,0,0},
+        .scale = {1,1,1}, 
+        .rotation = {0,0,0}
+    };
+    Array_push(meshes, mesh);
+    return &meshes[Array_length(meshes)-1];
 }
 
 enum OBJ_MODE
@@ -259,4 +226,32 @@ mesh_t Mesh_LoadObj(char* filename)
         ret.faces[i].d--;
     }
     return ret;
+}
+
+mesh_t* Mesh_LoadMesh(char* obj_filename, char* png_filename, vec3 position, vec3 scale, vec3 rotation)
+{
+    mesh_t* ret = New_Mesh();
+    *ret = Mesh_LoadObj(obj_filename);
+    ret->texture = load_image(png_filename);
+    ret->translation = position;
+    ret->rotation = rotation;
+    return ret;
+}
+
+mesh_t* Mesh_GetAllMeshes()
+{
+    if(meshes == null)
+        meshes = Array(mesh_t, 8);
+    return meshes;
+}
+
+
+void Mesh_dispose()
+{
+    for(int i = 0; i < Array_length(meshes); i++)
+    {
+        Array_destroy(meshes[i].vertices);
+        Array_destroy(meshes[i].uvs);
+    }
+    Array_destroy(meshes);
 }

@@ -16,13 +16,9 @@ typedef struct Image
 } Image;
 
 extern const uint8_t REDBRICK_TEXTURE[];
-extern uint32_t* mesh_texture;
-extern int texture_width;
-extern int texture_height;
-
 
 //Texture loading section
-Image load_image(char* path);
+Image* load_image(char* path);
 void free_images();
 
 #endif

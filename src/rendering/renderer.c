@@ -10,8 +10,8 @@ PixelBuffer pxBuffer;
 SDL_Window* window = null;
 SDL_Renderer* renderer = null;
 SDL_Surface* surface = null;
-int window_width = 800;
-int window_height = 600;
+int window_width = 320;
+int window_height = 200;
 
 // extern always_inline void pxDrawPixelU(int pos, uint32_t color);
 // extern always_inline void pxDrawPixelUXY(int x, int y, uint32_t color);
@@ -76,16 +76,16 @@ bool initialize_window(void)
 
     SDL_DisplayMode mode;
     SDL_GetCurrentDisplayMode(0, &mode);
-    window_width = mode.w;
-    window_height = mode.h;
+    int fullscreen_width = mode.w;
+    int fullscreen_height =  mode.h;
 
 
     window = SDL_CreateWindow(
         null,
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        window_width,
-        window_height,
+        fullscreen_width,
+        fullscreen_height,
         0
     );
 
@@ -324,7 +324,7 @@ uint32_t color)
 
 }
 
-void pxDrawTexel(int x, int y, uint32_t* texture,
+void pxDrawTexel(int x, int y, Image* image,
 vec4 pA, tex2D uvA,
 vec4 pB, tex2D uvB,
 vec4 pC, tex2D uvC)
@@ -354,6 +354,10 @@ vec4 pC, tex2D uvC)
     u/= w_reciprocal;
     v/= w_reciprocal;
 
+    uint32_t* texture = image->data;
+    uint texture_width = image->width;
+    uint texture_height = image->height;
+
     int texX = abs((int)(u*texture_width)) % texture_width;
     int texY = abs((int)(v*texture_height)) % texture_height;
 
@@ -374,7 +378,7 @@ void pxTextureTriangle(
 int x0, int y0, float z0, float w0, tex2D uvA,
 int x1, int y1, float z1, float w1, tex2D uvB,
 int x2, int y2, float z2, float w2, tex2D uvC,
-uint32_t color, uint32_t* texture)
+uint32_t color, Image* texture)
 {
     //Sort ascendingly by Y
     if(y0 > y1)
@@ -508,8 +512,8 @@ void pxRender(void)
         pxBuffer.data,
         (int)(sizeof(uint32_t) * pxBuffer.width)
     );
-
     SDL_RenderCopy(renderer, pxBuffer.texture, null, null);
+    SDL_RenderPresent(renderer);
 }
 
 void pxDestroy(void)
