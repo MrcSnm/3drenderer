@@ -114,13 +114,13 @@ void setup(void)
 
     // load_cube_mesh_data();
     game_meshes = Mesh_GetAllMeshes();
-    mesh_t* drone = Mesh_LoadMesh("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.obj",
-    "C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\cube.png",
+    mesh_t* drone = Mesh_LoadMesh("assets\\cube.obj",
+    "assets\\cube.png",
     (vec3){-3,0,0}, (vec3){1,1,1}, (vec3){0,0,0});
 
-    mesh_t* droner = Mesh_LoadMesh("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj",
-    "C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.png",
-    (vec3){3,0,0}, (vec3){1,1,1}, (vec3){0,0,0});
+    // mesh_t* droner = Mesh_LoadMesh("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj",
+    // "C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.png",
+    // (vec3){3,0,0}, (vec3){1,1,1}, (vec3){0,0,0});
     // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\drone.obj");
     // mesh = Mesh_LoadObj("C:\\Users\\Hipreme\\Documents\\3dRenderer\\C\\assets\\f22.obj");
 
@@ -132,6 +132,8 @@ void setup(void)
     float fov_x = atan(tan(fov_angle/2) * aspect_x)*2;;
 
     proj_matrix = mat4_perspective_mat( aspect_y, fov_angle, znear, zfar);
+
+    printf("Meshes: %d\n\n", Array_length(game_meshes));
 
     initialize_frustum(fov_x, fov_angle, znear, zfar);
 }

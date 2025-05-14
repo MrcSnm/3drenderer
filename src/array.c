@@ -12,6 +12,7 @@ struct Array
 {
     int size;
     int capacity;
+    int typeSize;
     void* data;
 }
 ```
